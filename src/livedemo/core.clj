@@ -21,8 +21,7 @@
 
 
 (comment "Computação"
-"https://www.youtube.com/watch?v=Pt6GBVIifZA
-"
+"https://www.youtube.com/watch?v=Pt6GBVIifZA"
 
          "s termina em 0?"
          "file://hello.clj representa um programa clojure?"
@@ -37,9 +36,11 @@
 
 (comment "
 
+Alfabeto:
+
 Estado:
  - Representa uma memória sobre o problema que está sendo resolvido.
- - Tudo que o que pode ser decidido com baseado numa quantidade finita de informação.
+ - Tudo que o que pode ser decidido baseado numa quantidade finita de informação.
 
 Função de transição:
  - Diz para qual estado ir.
@@ -64,12 +65,11 @@ E também é o estado inicial.
 (def even-zeros-states {:E true
                         :O false})
 
+(def even-zeros-transitions-map {:E {\0 :O \1 :E}
+                                 :O {\0 :E \1 :O}})
+
 (defn even-zeros-transitions [state input]
-  (match [state input]
-         [:E \0]  :O
-         [:E \1]  :E
-         [:O \0]  :E
-         [:O \1]  :O))
+  (get-in even-zeros-transitions-map [state input]))
 
 (even-zeros-transitions :E \0)
 (even-zeros-transitions :E \1)
@@ -79,14 +79,12 @@ E também é o estado inicial.
 (defn even-zeros? [s]
   (even-zeros-states (reduce even-zeros-transitions :E s)))
 
-(map #(vector % (even-zeros? %)) inputs)
-
-(even-zeros? "110")
+(map (juxt identity even-zeros?) inputs)
 
 (defn even-zeros-re? [s]
   (boolean (re-find #"^1*(01*01*)*$" s)))
 
-(map #(vector % (even-zeros-re? %)) inputs)
+(map (juxt identity even-zeros-re?) inputs)
 
 
 
@@ -98,17 +96,14 @@ E também é o estado inicial.
                                  :OE false
                                  :OO false})
 
+(def even-zeros-and-ones-transitions-map
+  {:EE {\0 :OE \1 :EO}
+   :OE {\0 :EE \1 :OO}
+   :EO {\0 :OO \1 :EE}
+   :OO {\0 :EO \1 :OE}})
 
 (defn even-zeros-and-ones-transitions [state input]
-  (match [state input]
-         [:EE \0] :OE
-         [:EE \1] :EO
-         [:OE \0] :EE
-         [:OE \1] :OO
-         [:EO \0] :OO
-         [:EO \1] :EE
-         [:OO \0] :EO
-         [:OO \1] :OE))
+  (get-in even-zeros-and-ones-transitions-map [state input]))
 
 (defn even-zeros-and-ones? [s]
   (even-zeros-and-ones-states (reduce even-zeros-and-ones-transitions :EE s)))
@@ -127,15 +122,13 @@ E também é o estado inicial.
                                :FIRST_ZERO false
                                :SECOND_ZERO true})
 
+(def ends-with-2-zeros-transitions-map
+  {:NO_ZERO {\0 :FIRST_ZERO \1 :NO_ZERO}
+   :FIRST_ZERO {\0 :SECOND_ZERO \1 :NO_ZERO}
+    :SECOND_ZERO {\0 :SECOND_ZERO \1 :NO_ZERO}})
 
 (defn ends-with-2-zeros-transitions [state input]
-  (match [state input]
-         [:NO_ZERO \0] :FIRST_ZERO
-         [:NO_ZERO \1] :NO_ZERO
-         [:FIRST_ZERO \0] :SECOND_ZERO
-         [:FIRST_ZERO \1] :NO_ZERO
-         [:SECOND_ZERO \0] :SECOND_ZERO
-         [:SECOND_ZERO \1] :NO_ZERO))
+  (get-in ends-with-2-zeros-transitions-map [state input]))
 
 (defn ends-with-2-zeros? [s]
   (ends-with-2-zeros-states (reduce ends-with-2-zeros-transitions :NO_ZERO s)))
@@ -144,28 +137,15 @@ E também é o estado inicial.
 
 
 
-
-
-
-
-
-
 (def not-ends-with-2-zeros-states {:NO_ZERO true
                                    :FIRST_ZERO true
                                    :SECOND_ZERO false})
 
 
-(defn not-ends-with-2-zeros-transitions [state input]
-  (match [state input]
-         [:NO_ZERO \0] :FIRST_ZERO
-         [:NO_ZERO \1] :NO_ZERO
-         [:FIRST_ZERO \0] :SECOND_ZERO
-         [:FIRST_ZERO \1] :NO_ZERO
-         [:SECOND_ZERO \0] :SECOND_ZERO
-         [:SECOND_ZERO \1] :NO_ZERO))
-
 (defn not-ends-with-2-zeros? [s]
-  (not-ends-with-2-zeros-states (reduce not-ends-with-2-zeros-transitions :NO_ZERO s)))
+  (not-ends-with-2-zeros-states
+    (reduce ends-with-2-zeros-transitions :NO_ZERO s)))
+
 
 (map #(vector % (not-ends-with-2-zeros? %)) inputs)
 
@@ -174,6 +154,37 @@ E também é o estado inicial.
 (comment "
   String matching
 ")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
