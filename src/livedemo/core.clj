@@ -1,43 +1,179 @@
 (ns livedemo.core
   (require [livedemo.vars :refer :all]
            [clojure.string :as s]
-           [clojure.edn :as edn]))
+           [clojure.edn :as edn]
+           [clojure.core.match :refer [match]]
+           ))
 
 (comment
   "http://www.paulgraham.com/avg.html"
 
-  Lisp is worth learning for the profound enlightenment
+  "Lisp is worth learning for the profound enlightenment
   experience you will have when you finally get it;
   that experience will make you a better programmer
   for the rest of your days, even if you never actually
   use Lisp itself a lot.
 
-  -- Eric Raymond - How to Become a Hacker
+  -- Eric Raymond - How to Become a Hacker"
+
+  "http://www.michaelnielsen.org/ddi/lisp-as-the-maxwells-equations-of-software/"
   )
 
-(comment
-  ; (a + b) * (c + d)
 
-  ;eax = 1
-  mov eax, 1
+(comment "Computação"
+"https://www.youtube.com/watch?v=Pt6GBVIifZA
+"
 
-  ;ebx = 2
-  mov ebx, 2
+         "s termina em 0?"
+         "file://hello.clj representa um programa clojure?"
+         "file://hello.clj representa um programa clojure que nunca retorna?")
 
-  ; 3 = eax =  eax + ebx
-  add eax, ebx
 
-  ;ecx = 3
-  mov ecx, 3
+(comment "Linguagens regulares"
+         "Linguagens livre de contexto"
+         "Máquina de Turing"
+         )
 
-  ;edx = 4
-  mov edx, 4
 
-  ; 7 = ecx =  ecx + edx
-  add ecx, edx
+(comment "
 
-  ; 21 = eax = eax * ecx
-  imul eax, ecx)
+Estado:
+ - Representa uma memória sobre o problema que está sendo resolvido.
+ - Tudo que o que pode ser decidido com baseado numa quantidade finita de informação.
+
+Função de transição:
+ - Diz para qual estado ir.
+
+
+Uma string contém um número par de zeros?
+
+Dois estados: E e O. E é um estado final.
+
+Funções de transição:
+E(0) = O
+E(1) = E
+
+O(0) = E
+O(1) = O
+
+E também é o estado inicial.
+")
+
+(def inputs ["" "0" "1" "01" "10" "00" "11" "001" "0010" "0011" "110001"  "11000"])
+
+(def even-zeros-states {:E true
+                        :O false})
+
+(defn even-zeros-transitions [state input]
+  (match [state input]
+         [:E \0]  :O
+         [:E \1]  :E
+         [:O \0]  :E
+         [:O \1]  :O))
+
+(even-zeros-transitions :E \0)
+(even-zeros-transitions :E \1)
+(even-zeros-transitions :O \0)
+(even-zeros-transitions :O \1)
+
+(defn even-zeros? [s]
+  (even-zeros-states (reduce even-zeros-transitions :E s)))
+
+(map #(vector % (even-zeros? %)) inputs)
+
+(even-zeros? "110")
+
+(defn even-zeros-re? [s]
+  (boolean (re-find #"^1*(01*01*)*$" s)))
+
+(map #(vector % (even-zeros-re? %)) inputs)
+
+
+
+
+
+
+(def even-zeros-and-ones-states {:EE true
+                                 :EO false
+                                 :OE false
+                                 :OO false})
+
+
+(defn even-zeros-and-ones-transitions [state input]
+  (match [state input]
+         [:EE \0] :OE
+         [:EE \1] :EO
+         [:OE \0] :EE
+         [:OE \1] :OO
+         [:EO \0] :OO
+         [:EO \1] :EE
+         [:OO \0] :EO
+         [:OO \1] :OE))
+
+(defn even-zeros-and-ones? [s]
+  (even-zeros-and-ones-states (reduce even-zeros-and-ones-transitions :EE s)))
+
+(map #(vector % (even-zeros-and-ones? %)) inputs)
+
+
+
+
+
+
+
+
+
+(def ends-with-2-zeros-states {:NO_ZERO false
+                               :FIRST_ZERO false
+                               :SECOND_ZERO true})
+
+
+(defn ends-with-2-zeros-transitions [state input]
+  (match [state input]
+         [:NO_ZERO \0] :FIRST_ZERO
+         [:NO_ZERO \1] :NO_ZERO
+         [:FIRST_ZERO \0] :SECOND_ZERO
+         [:FIRST_ZERO \1] :NO_ZERO
+         [:SECOND_ZERO \0] :SECOND_ZERO
+         [:SECOND_ZERO \1] :NO_ZERO))
+
+(defn ends-with-2-zeros? [s]
+  (ends-with-2-zeros-states (reduce ends-with-2-zeros-transitions :NO_ZERO s)))
+
+(map #(vector % (ends-with-2-zeros? %)) inputs)
+
+
+
+
+
+
+
+
+
+(def not-ends-with-2-zeros-states {:NO_ZERO true
+                                   :FIRST_ZERO true
+                                   :SECOND_ZERO false})
+
+
+(defn not-ends-with-2-zeros-transitions [state input]
+  (match [state input]
+         [:NO_ZERO \0] :FIRST_ZERO
+         [:NO_ZERO \1] :NO_ZERO
+         [:FIRST_ZERO \0] :SECOND_ZERO
+         [:FIRST_ZERO \1] :NO_ZERO
+         [:SECOND_ZERO \0] :SECOND_ZERO
+         [:SECOND_ZERO \1] :NO_ZERO))
+
+(defn not-ends-with-2-zeros? [s]
+  (not-ends-with-2-zeros-states (reduce not-ends-with-2-zeros-transitions :NO_ZERO s)))
+
+(map #(vector % (not-ends-with-2-zeros? %)) inputs)
+
+
+
+(comment "
+  String matching
+")
 
 
 
