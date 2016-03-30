@@ -3,9 +3,15 @@
            [clojure.string :as s]
            [clojure.edn :as edn]
            [clojure.core.match :refer [match]]
-           ))
+           [instaparse.core :as insta]
+           [clojure.pprint :refer [pprint]]
+           [clojure.walk :as walk]
 
+           ))
 (comment
+(comment
+  "https://github.com/Buzzlabs/LiveDemo"
+
   "http://www.paulgraham.com/avg.html"
 
   "Lisp is worth learning for the profound enlightenment
@@ -17,179 +23,32 @@
   -- Eric Raymond - How to Become a Hacker"
 
   "http://www.michaelnielsen.org/ddi/lisp-as-the-maxwells-equations-of-software/"
-  )
+  ))
 
 
-(comment "Computação"
-"https://www.youtube.com/watch?v=Pt6GBVIifZA"
+(comment
+  ; (a + b) * (c + d)
 
-         "s termina em 0?"
-         "file://hello.clj representa um programa clojure?"
-         "file://hello.clj representa um programa clojure que nunca retorna?")
+  ;eax = 1
+  mov eax, 1
 
+  ;ebx = 2
+  mov ebx, 2
 
-(comment "Linguagens regulares"
-         "Linguagens livre de contexto"
-         "Máquina de Turing"
-         )
+  ; 3 = eax =  eax + ebx
+  add eax, ebx
 
+  ;ecx = 3
+  mov ecx, 3
 
-(comment "
+  ;edx = 4
+  mov edx, 4
 
-Alfabeto:
+  ; 7 = ecx =  ecx + edx
+  add ecx, edx
 
-Estado:
- - Representa uma memória sobre o problema que está sendo resolvido.
- - Tudo que o que pode ser decidido baseado numa quantidade finita de informação.
-
-Função de transição:
- - Diz para qual estado ir.
-
-
-Uma string contém um número par de zeros?
-
-Dois estados: E e O. E é um estado final.
-
-Funções de transição:
-E(0) = O
-E(1) = E
-
-O(0) = E
-O(1) = O
-
-E também é o estado inicial.
-")
-
-(def inputs ["" "0" "1" "01" "10" "00" "11" "001" "0010" "0011" "110001"  "11000"])
-
-(def even-zeros-states {:E true
-                        :O false})
-
-(def even-zeros-transitions-map {:E {\0 :O \1 :E}
-                                 :O {\0 :E \1 :O}})
-
-(defn even-zeros-transitions [state input]
-  (get-in even-zeros-transitions-map [state input]))
-
-(even-zeros-transitions :E \0)
-(even-zeros-transitions :E \1)
-(even-zeros-transitions :O \0)
-(even-zeros-transitions :O \1)
-
-(defn even-zeros? [s]
-  (even-zeros-states (reduce even-zeros-transitions :E s)))
-
-(map (juxt identity even-zeros?) inputs)
-
-(defn even-zeros-re? [s]
-  (boolean (re-find #"^1*(01*01*)*$" s)))
-
-(map (juxt identity even-zeros-re?) inputs)
-
-
-
-
-
-
-(def even-zeros-and-ones-states {:EE true
-                                 :EO false
-                                 :OE false
-                                 :OO false})
-
-(def even-zeros-and-ones-transitions-map
-  {:EE {\0 :OE \1 :EO}
-   :OE {\0 :EE \1 :OO}
-   :EO {\0 :OO \1 :EE}
-   :OO {\0 :EO \1 :OE}})
-
-(defn even-zeros-and-ones-transitions [state input]
-  (get-in even-zeros-and-ones-transitions-map [state input]))
-
-(defn even-zeros-and-ones? [s]
-  (even-zeros-and-ones-states (reduce even-zeros-and-ones-transitions :EE s)))
-
-(map #(vector % (even-zeros-and-ones? %)) inputs)
-
-
-
-
-
-
-
-
-
-(def ends-with-2-zeros-states {:NO_ZERO false
-                               :FIRST_ZERO false
-                               :SECOND_ZERO true})
-
-(def ends-with-2-zeros-transitions-map
-  {:NO_ZERO {\0 :FIRST_ZERO \1 :NO_ZERO}
-   :FIRST_ZERO {\0 :SECOND_ZERO \1 :NO_ZERO}
-    :SECOND_ZERO {\0 :SECOND_ZERO \1 :NO_ZERO}})
-
-(defn ends-with-2-zeros-transitions [state input]
-  (get-in ends-with-2-zeros-transitions-map [state input]))
-
-(defn ends-with-2-zeros? [s]
-  (ends-with-2-zeros-states (reduce ends-with-2-zeros-transitions :NO_ZERO s)))
-
-(map #(vector % (ends-with-2-zeros? %)) inputs)
-
-
-
-(def not-ends-with-2-zeros-states {:NO_ZERO true
-                                   :FIRST_ZERO true
-                                   :SECOND_ZERO false})
-
-
-(defn not-ends-with-2-zeros? [s]
-  (not-ends-with-2-zeros-states
-    (reduce ends-with-2-zeros-transitions :NO_ZERO s)))
-
-
-(map #(vector % (not-ends-with-2-zeros? %)) inputs)
-
-
-
-(comment "
-  String matching
-")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  ; 21 = eax = eax * ecx
+  imul eax, ecx)
 
 
 (comment
@@ -202,16 +61,7 @@ E também é o estado inicial.
   int resultado = soma1 * soma2;
   )
 
-
-
-
-
-
-
-
-
-
-  (comment
+(comment
   ; clang -Xclang -ast-dump -fsyntax-only test.cc
 
   kenny:tmp leandro$ clang -Xclang -ast-dump -fsyntax-only test.cc
@@ -246,10 +96,18 @@ E também é o estado inicial.
   | `-DeclRefExpr 0x10306cd98 <col:19> 'int' lvalue Var 0x1030224d0 'soma1' 'int'
   `-ImplicitCastExpr 0x10306ce00 <col:27> 'int' <LValueToRValue>
   `-DeclRefExpr 0x10306cdc0 <col:27> 'int' lvalue Var 0x10306cc10 'soma2' 'int'
-)
-
+  )
 
 42
+
+[42 3 4 5 ]
+
+[42 0]
+
+#_(42) ; <==== Erro
+
+`(42 20 3)
+(println "oi")
 
 ; 40 + 2
 (+ 40 2)
@@ -303,7 +161,9 @@ resultado2
   (println "5")
   5)
 
+dois
 (dois)
+
 
 
 (delta (dois) (cinco) (tres))
@@ -312,14 +172,23 @@ resultado2
 []
 (vec (range 10))
 
+(let [pera 10]
+  pera)
+
+#_pera
+
+
+
 (defn bhaskara [a b c]
-  (let [delta (delta a b c)
-        raiz-delta (Math/sqrt delta)
+  (let [d (delta a b c)
+        raiz-delta (Math/sqrt d)
         numerador1  (+ (- b) raiz-delta)
         numerador2  (- (- b) raiz-delta)
         denominador (* 2 a)]
     [(/ numerador1 denominador)
      (/ numerador2 denominador)]))
+
+
 
 (bhaskara 2 5 3)
 
@@ -327,8 +196,12 @@ resultado2
 
 (bhaskara 5 4 3)
 
+(delta 5 4 3)
+
 (delta (dois) (cinco) (tres))
+
 (if (dois) (cinco) (tres))
+
 
 
 (pos? 10)
@@ -369,6 +242,23 @@ resultado2
 (bhaskara-3 1 2 1)
 
 
+(println "Hello world!")
+`(println "Hello world!")
+
+
+(defn a [x] (+ x 5))
+(defn b [x] (- x 5))
+(defn c [x] (* x 5))
+(defn d [x] (/ x 5))
+
+(d (c (b (a 10))))
+
+(-> 10 a b c d)
+
+(macroexpand-1 `(-> 10 a b c d))
+
+
+
 
 
 
@@ -394,7 +284,6 @@ sample-ps
 
 
 
-
 (defn parse-header [header-str]
   (->> (s/split (s/lower-case header-str) #"\s+")
        (map keyword)))
@@ -406,17 +295,18 @@ sample-ps
       rest
       vec))
 
+
 (defn transform-data-row [splited-row]
   (-> splited-row
       (update-in [1] edn/read-string)
       (update-in [2] edn/read-string)
       (update-in [3] edn/read-string)))
 
-; explicar mapas.
-
 (defn make-hash-map [header transformed-data-row]
   (apply hash-map (interleave header transformed-data-row)))
 
+
+; explicar partial antes.
 
 (defn parse-ps [output]
   (let [[header-str & data] (s/split-lines (s/trim output) )]
@@ -425,10 +315,33 @@ sample-ps
            (map s/trim)
            (map split-data-row)
            (map transform-data-row)
-           (map (partial make-hash-map header))))))
+           (map (partial make-hash-map header))
+           #_(map (fn [x] (make-hash-map header x) ))
+           ))))
+
 
 (parse-ps sample-ps)
 
+(def mais_cinco (partial + 5 ))
+
+(mais_cinco 20)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"https://www.youtube.com/watch?v=XnPQElUMRkg"
 
 
 
@@ -448,7 +361,14 @@ sample-ps
 
 
 
-(require '[instaparse.core :as insta])
+
+
+
+
+
+
+
+
 
 
 (def grammar "
@@ -476,7 +396,7 @@ ws             = #'\\s+'
 
 (def parser-ps-insta (insta/parser grammar))
 
-(take 4 (parser-ps-insta output))
+(take 2 (parser-ps-insta output))
 
 
 (def transformer
@@ -541,10 +461,19 @@ ws             = #'\\s+'
 (defmacro rev [fun & args]
   (cons fun (reverse args)))
 
+
+(str (+ 1 2) " hi ")
+(rev str (+ 1 2) " hi ")
+
+(rev mod 3 10)
+(macroexpand-1 `(rev mod 3 10))
+
+(rev + 3 10 20)
+(macroexpand-1 `(rev + 3 10 20))
+
+
 (macroexpand '(rev str "hi" (+ 1 2)))
 
-(str (+ 1 2) "hi")
-(rev str (+ 1 2) "hi")
 
 (require '[kibit.check :as kibit])
 (require '[kibit.core])
@@ -572,3 +501,176 @@ ws             = #'\\s+'
 
 
   )
+
+(def fib-seq
+  ((fn rfib [a b]
+     (lazy-seq (cons a (rfib b (+ a b)))))
+    0N 1N))
+
+(take 100 fib-seq)
+
+
+
+(def m {:nome "Leandro" :dados {:idade 36 :sexo "m"}})
+
+(update-in m [:dados :idade] inc)
+(update-in {:a {:b 0}} [:a :b] inc)
+
+
+
+
+
+(def v "Nexo Expresso
+Nexo Explícito
+Nexo Ensaio
+Nexo Colunistas
+Nexo Gráfico
+Nexo Vídeo
+Nexo Extra
+Nexo Reportagem
+Nexo Entrevista
+Nexo Podcast
+Nexo Agora
+Nexo Serviço
+Nexo Especial")
+
+(def accents
+  {\á "a"
+   \à "a"
+   \â "a"
+   \ã "a"
+
+   \é "e"
+   \è "e"
+   \ê "e"
+
+   \í "i"
+   \ì "i"
+   \î "i"
+
+   \ó "o"
+   \ò "o"
+   \ô "o"
+   \õ "o"
+
+   \ú "u"
+   \ù "u"
+   \û "u"
+
+   \ç "c"
+   })
+
+
+
+
+;; Recurrency is a powerful concept, which helps us traverse
+;; collections. We can also abstract the actual transformation,
+;; (which is represented as `term` here) and the evaluation
+;; of the next step (represented as `next`).
+
+(defn sum [ term a next b ]
+  (if (> a b)
+    0
+    (+ (term a)
+       (sum term (next a) next b))))
+
+;; Constructing new functions from other functions.
+;; Remember, that operators are actually functions.
+
+(defn cube [ n ]
+  (* n n n))
+
+(defn incr [ n ]
+  (+ n 1))
+
+;; Reusing the existing function inside the transformation.
+;; Please, look that we describe what should be calculated,
+;; not how it should iterate through range.
+
+(defn sum-cubes [ a b ]
+  (sum cube a incr b))
+
+(println (sum-cubes 3 3))
+
+;; Private functions can be created inside the scope.
+;; Thanks to that we can hide unnecessary details from
+;; the others.
+
+(defn pi-sum [ a b ]
+  (defn pi-term [ x ]
+    (/ 1.0 (* x (+ x 2))))
+  (defn pi-next [ x ]
+    (+ x 4))
+  (sum pi-term a pi-next b))
+
+(println (* 8 (pi-sum 1 1000)))
+
+;; Please look at the `add-dx` function - in that case
+;; we are using function arguments inside from the higher
+;; scope.
+
+(defn integral [ f a b dx ]
+  (defn add-dx [ x ] (+ x dx))
+  (* (sum f (+ a (/ dx 2.0)) add-dx b) dx))
+
+(println (integral cube 0 1 0.001))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(defn first-denomization [ kinds-of-coins ]
+  (cond (= kinds-of-coins 1) 1
+        (= kinds-of-coins 2) 5
+        (= kinds-of-coins 3) 10
+        (= kinds-of-coins 4) 25
+        (= kinds-of-coins 5) 50))
+
+(defn cc [ amount kinds-of-coins ]
+  (cond (= amount 0) 1
+        (or (< amount 0) (= kinds-of-coins 0)) 0
+        :else (+ (cc amount
+                     (- kinds-of-coins 1))
+                 (cc (- amount
+                        (first-denomization kinds-of-coins))
+                     kinds-of-coins))))
+
+(defn count-change [ amount ]
+  (cc amount 2))
+
+(println (count-change 10)  )
+
+
+
+
+
+(->> (s/split-lines "wp_commentmeta
+wp_comments
+wp_links
+wp_options
+wp_postmeta
+wp_posts
+wp_term_relationships
+wp_term_taxonomy
+wp_terms
+wp_usermeta
+wp_users")
+     (map #(str "DROP table " % "; "))
+     (s/join))
+
+
+"http://alcor.concordia.ca/~vjorge/Palavras-Cruzadas/Lista-de-Palavras.txt"
+
+

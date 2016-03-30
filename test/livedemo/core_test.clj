@@ -1,7 +1,5 @@
 (ns livedemo.core-test
   (:require [clojure.test :refer :all]
-            [livedemo.core :refer :all]))
+            #_[livedemo.core :refer :all]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+
